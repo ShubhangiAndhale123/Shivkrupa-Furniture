@@ -1,0 +1,13 @@
+{
+  "name": "shivkrupa-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "shivkrupa-frontend"
+  ],
+  "scripts": {
+    "dev": "npm run dev --prefix shivkrupa-frontend",
+    "build": "npm run build --prefix shivkrupa-frontend",
+    "preview": "npm run preview --prefix shivkrupa-frontend"
+  }
+}
