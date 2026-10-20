@@ -2,6 +2,7 @@
 -- Shivkrupa — Smart Furniture Design, Budget Estimation and Order Management System
 -- Migration: 001_create_profiles.sql
 -- Description: Creates the public.profiles table, triggers for auth.users, and RLS policies
+-- Roles Supported: 'customer', 'staff', 'admin', 'production'
 -- ==============================================================================
 
 -- 1. Create public.profiles table
@@ -17,7 +18,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
--- Comment on table and columns
+-- Comments on table and columns
 COMMENT ON TABLE public.profiles IS 'User profiles and roles for Shivkrupa management system';
 COMMENT ON COLUMN public.profiles.id IS 'Primary key referencing auth.users(id)';
 COMMENT ON COLUMN public.profiles.role IS 'User role: customer, staff, admin, or production';
@@ -137,12 +138,36 @@ AS $$
   SELECT role FROM public.profiles WHERE id = auth.uid();
 $$;
 
--- 6. Helper function to assign roles to users (Admin only)
+-- 6. Trigger to prevent unauthorized role escalation
+-- Ensures that non-admin users cannot alter the role column on any profile update
+CREATE OR REPLACE FUNCTION public.prevent_unauthorized_role_change()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NEW.role IS DISTINCT FROM OLD.role THEN
+    IF auth.uid() IS NOT NULL AND public.get_current_user_role() != 'admin' THEN
+      RAISE EXCEPTION 'Access denied: You are not authorized to modify user roles.';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_prevent_unauthorized_role_change ON public.profiles;
+CREATE TRIGGER trg_prevent_unauthorized_role_change
+BEFORE UPDATE ON public.profiles
+FOR EACH ROW
+EXECUTE FUNCTION public.prevent_unauthorized_role_change();
+
+-- 7. Helper functions to assign roles to users (Admin or DB service role only)
 CREATE OR REPLACE FUNCTION public.assign_user_role(target_user_id UUID, new_role TEXT)
 RETURNS VOID
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, auth
 AS $$
 BEGIN
   -- Validate permitted role
@@ -150,7 +175,7 @@ BEGIN
     RAISE EXCEPTION 'Invalid role "%". Allowed roles: customer, staff, admin, production', new_role;
   END IF;
 
-  -- Verify caller is an administrator (unless called by DB superuser/service role)
+  -- Verify caller is an administrator (unless called by DB superuser / service role)
   IF auth.uid() IS NOT NULL AND public.get_current_user_role() != 'admin' THEN
     RAISE EXCEPTION 'Access denied: Only administrators can assign roles';
   END IF;
@@ -158,14 +183,46 @@ BEGIN
   UPDATE public.profiles
   SET role = new_role, updated_at = timezone('utc'::text, now())
   WHERE id = target_user_id;
+
+  -- If profile row does not exist yet for target_user_id, create it from auth.users
+  IF NOT FOUND THEN
+    INSERT INTO public.profiles (id, email, full_name, role, created_at, updated_at)
+    SELECT
+      u.id,
+      COALESCE(u.email, ''),
+      COALESCE(u.raw_user_meta_data->>'full_name', u.raw_user_meta_data->>'name', ''),
+      new_role,
+      timezone('utc'::text, now()),
+      timezone('utc'::text, now())
+    FROM auth.users u
+    WHERE u.id = target_user_id;
+  END IF;
 END;
 $$;
 
--- 7. Enable Row Level Security (RLS)
+-- Helper to assign role by email (convenient for SQL editor setup)
+CREATE OR REPLACE FUNCTION public.assign_user_role_by_email(target_email TEXT, new_role TEXT)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+DECLARE
+  v_user_id UUID;
+BEGIN
+  SELECT id INTO v_user_id FROM auth.users WHERE LOWER(email) = LOWER(TRIM(target_email)) LIMIT 1;
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'User with email "%" not found in auth.users', target_email;
+  END IF;
+
+  PERFORM public.assign_user_role(v_user_id, new_role);
+END;
+$$;
+
+-- 8. Enable Row Level Security (RLS)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
--- 8. Row Level Security Policies
--- Drop existing policies if re-running
+-- 9. Row Level Security Policies
 DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
 DROP POLICY IF EXISTS "Staff and Admin can view all profiles" ON public.profiles;
 DROP POLICY IF EXISTS "Users can update their own profile fields" ON public.profiles;
@@ -187,7 +244,7 @@ FOR SELECT
 TO authenticated
 USING (public.get_current_user_role() IN ('admin', 'staff'));
 
--- Policy C: Users can update their own profile details (cannot escalate their own role)
+-- Policy C: Users can update their own profile details (role escalation blocked by trigger & check)
 CREATE POLICY "Users can update their own profile fields"
 ON public.profiles
 FOR UPDATE
@@ -195,7 +252,7 @@ TO authenticated
 USING (auth.uid() = id)
 WITH CHECK (
   auth.uid() = id
-  AND role = (SELECT p.role FROM public.profiles p WHERE p.id = auth.uid())
+  AND role = public.get_current_user_role()
 );
 
 -- Policy D: Admins can update any profile (including role changes)
@@ -219,3 +276,10 @@ ON public.profiles
 FOR DELETE
 TO authenticated
 USING (public.get_current_user_role() = 'admin');
+
+-- 10. Permissions
+GRANT ALL ON public.profiles TO authenticated;
+GRANT ALL ON public.profiles TO service_role;
+GRANT EXECUTE ON FUNCTION public.get_current_user_role TO authenticated;
+GRANT EXECUTE ON FUNCTION public.assign_user_role TO authenticated;
+GRANT EXECUTE ON FUNCTION public.assign_user_role_by_email TO authenticated;

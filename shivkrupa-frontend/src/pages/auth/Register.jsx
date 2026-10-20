@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'
-import { Eye, EyeOff, ArrowLeft, CheckCircle, Mail, AlertCircle } from 'lucide-react'
+import { useAuth, VALID_ROLES } from '../../context/AuthContext'
+import { Eye, EyeOff, ArrowLeft, CheckCircle, Mail, AlertCircle, Loader2 } from 'lucide-react'
 import Input from '../../components/common/Input'
 import Button from '../../components/common/Button'
 import logo from '../../assets/logo.png'
@@ -19,8 +19,34 @@ export default function Register() {
   const [errors, setErrors] = useState({})
   const [successState, setSuccessState] = useState(null) // null | 'direct_login' | 'needs_verification'
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { register } = useAuth()
+  const { register, user, isAuthenticated, loading } = useAuth()
   const navigate = useNavigate()
+
+  // Helper to map role to dashboard path
+  const getDashboardPath = (role) => {
+    switch (role) {
+      case 'customer':
+        return '/customer/dashboard'
+      case 'staff':
+        return '/staff/dashboard'
+      case 'admin':
+        return '/admin/dashboard'
+      case 'production':
+        return '/production/dashboard'
+      default:
+        return null
+    }
+  }
+
+  // When already authenticated, redirect to authorized dashboard
+  useEffect(() => {
+    if (!loading && isAuthenticated && user?.role && VALID_ROLES.includes(user.role)) {
+      const dest = getDashboardPath(user.role)
+      if (dest) {
+        navigate(dest, { replace: true })
+      }
+    }
+  }, [loading, isAuthenticated, user, navigate])
 
   const validate = () => {
     const newErrors = {}
@@ -67,6 +93,8 @@ export default function Register() {
     setErrors({})
 
     try {
+      // Security: Public signups only register customers.
+      // Database trigger handle_new_user() strictly assigns role 'customer'.
       const result = await register({
         fullName: form.fullName.trim(),
         email: form.email.trim(),
@@ -86,6 +114,16 @@ export default function Register() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // Loading state while checking session
+  if (loading && !isSubmitting) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center p-4">
+        <Loader2 className="w-8 h-8 text-amber-600 animate-spin mb-3" />
+        <p className="text-stone-500 text-sm font-medium">Checking session...</p>
+      </div>
+    )
   }
 
   // State: Needs Email Confirmation
@@ -123,7 +161,7 @@ export default function Register() {
             <CheckCircle className="w-10 h-10 text-emerald-600" />
           </div>
           <h2 className="text-2xl font-bold text-stone-900 mb-2 font-display">Welcome to Shivkrupa!</h2>
-          <p className="text-stone-500">Your account has been created successfully. Redirecting to your dashboard...</p>
+          <p className="text-stone-500">Your customer account has been created successfully. Redirecting to your dashboard...</p>
         </div>
       </div>
     )

@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import {
   Package, FileText, Palette, CheckCircle, Clock, ArrowRight,
   TrendingUp, Sparkles, Phone
@@ -35,12 +36,14 @@ const timelineSteps = [
 ]
 
 export default function CustomerDashboard() {
+  const { user } = useAuth()
+
   return (
     <div className="space-y-8">
       {/* Welcome Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="page-title">Welcome back!</h1>
+          <h1 className="page-title">Welcome back{user?.name ? `, ${user.name}` : ''}!</h1>
           <p className="text-stone-500 mt-1">Here's what's happening with your projects</p>
         </div>
         <Link to="/customer/requirements/new" className="btn-accent inline-flex items-center gap-2 self-start">

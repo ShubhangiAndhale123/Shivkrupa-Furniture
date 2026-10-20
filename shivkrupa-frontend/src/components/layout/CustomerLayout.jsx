@@ -29,9 +29,9 @@ export default function CustomerLayout() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const handleLogout = () => {
-    logout()
-    navigate('/')
+  const handleLogout = async () => {
+    await logout()
+    navigate('/', { replace: true })
   }
 
   return (
@@ -121,7 +121,10 @@ export default function CustomerLayout() {
                   <div className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-stone-100 py-2 z-50">
                     <div className="px-4 py-3 border-b border-stone-100">
                       <p className="font-semibold text-stone-900 text-sm">{user?.name}</p>
-                      <p className="text-xs text-stone-500">{user?.email}</p>
+                      <p className="text-xs text-stone-500 truncate">{user?.email}</p>
+                      <span className="inline-block mt-1 text-[10px] text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-semibold uppercase tracking-wider">
+                        Customer
+                      </span>
                     </div>
                     <Link to="/customer/profile" className="block px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50" onClick={() => setProfileOpen(false)}>
                       My Profile

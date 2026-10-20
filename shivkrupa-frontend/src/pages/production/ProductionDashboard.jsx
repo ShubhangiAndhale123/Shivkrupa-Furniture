@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import { Package, Clock, CheckCircle, AlertCircle } from 'lucide-react'
 import Card from '../../components/common/Card'
 import { mockOrders } from '../../data/mockData'
@@ -14,11 +15,13 @@ const stats = [
 ]
 
 export default function ProductionDashboard() {
+  const { user } = useAuth()
+
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="page-title">Production Dashboard</h1>
-        <p className="text-stone-500 mt-1">Manage your assigned production orders</p>
+        <h1 className="page-title">Production Dashboard — {user?.name || 'Production Team'}</h1>
+        <p className="text-stone-500 mt-1">Manage approved production orders, manufacturing progress, and delivery timelines</p>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
         {stats.map((stat, idx) => (

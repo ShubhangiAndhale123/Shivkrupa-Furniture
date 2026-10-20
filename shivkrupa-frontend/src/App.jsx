@@ -1,5 +1,5 @@
 import React from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
 import ProtectedRoute from './routes/ProtectedRoute'
@@ -75,6 +75,12 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
+          {/* Direct Role URL Aliases */}
+          <Route path="/customer" element={<Navigate to="/customer/dashboard" replace />} />
+          <Route path="/staff" element={<Navigate to="/staff/dashboard" replace />} />
+          <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/production" element={<Navigate to="/production/dashboard" replace />} />
+
           {/* Customer Routes */}
           <Route element={<ProtectedRoute allowedRoles={['customer']} />}>
             <Route element={<CustomerLayout />}>
@@ -119,6 +125,7 @@ function App() {
               <Route path="/admin/quotations" element={<AdminQuotations />} />
               <Route path="/admin/orders" element={<AdminOrders />} />
               <Route path="/admin/employees" element={<AdminEmployees />} />
+              <Route path="/admin/users" element={<AdminEmployees />} />
               <Route path="/admin/reports" element={<AdminReports />} />
             </Route>
           </Route>
@@ -131,6 +138,9 @@ function App() {
               <Route path="/production/profile" element={<ProductionProfile />} />
             </Route>
           </Route>
+
+          {/* Catch-All Route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </NotificationProvider>
     </AuthProvider>

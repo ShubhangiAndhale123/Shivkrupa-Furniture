@@ -1,12 +1,13 @@
 import React from 'react'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { LayoutDashboard, Package, CheckCircle, Bell, Menu, X, ChevronRight, LogOut, Search } from 'lucide-react'
+import { LayoutDashboard, Package, User, Bell, Menu, X, ChevronRight, LogOut, Search } from 'lucide-react'
 import logo from '../../assets/logo.png'
 
 const productionNav = [
   { path: '/production/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/production/orders', label: 'Assigned Orders', icon: Package },
+  { path: '/production/profile', label: 'My Profile', icon: User },
 ]
 
 export default function ProductionLayout() {
@@ -15,7 +16,10 @@ export default function ProductionLayout() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const handleLogout = () => { logout(); navigate('/') }
+  const handleLogout = async () => {
+    await logout()
+    navigate('/', { replace: true })
+  }
 
   return (
     <div className="min-h-screen bg-stone-50 flex">
@@ -24,7 +28,7 @@ export default function ProductionLayout() {
           <img src={logo} alt="Shivkrupa" className="h-10 w-auto" />
           <div>
             <h1 className="font-bold text-stone-900 text-sm font-display">SHIVKRUPA</h1>
-            <p className="text-[9px] text-stone-500 -mt-0.5 tracking-wider uppercase">Production</p>
+            <p className="text-[9px] text-stone-500 -mt-0.5 tracking-wider uppercase">Production Portal</p>
           </div>
         </div>
         <nav className="p-4 space-y-1">
@@ -53,13 +57,18 @@ export default function ProductionLayout() {
               <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 hover:bg-stone-50 rounded-lg"><Menu className="w-5 h-5" /></button>
               <div className="hidden md:flex items-center bg-stone-100 rounded-xl px-4 py-2 w-72">
                 <Search className="w-4 h-4 text-stone-400" />
-                <input type="text" placeholder="Search..." className="bg-transparent border-none outline-none text-sm ml-2 w-full placeholder:text-stone-400" />
+                <input type="text" placeholder="Search orders..." className="bg-transparent border-none outline-none text-sm ml-2 w-full placeholder:text-stone-400" />
               </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2.5 p-1.5">
-                <div className="w-9 h-9 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center text-green-800 font-bold text-sm">{user?.name?.charAt(0)}</div>
-                <span className="hidden sm:block text-sm font-semibold text-stone-700">{user?.name?.split(' ')[0]}</span>
+                <div className="w-9 h-9 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center text-green-800 font-bold text-sm">
+                  {user?.name?.charAt(0) || 'P'}
+                </div>
+                <div className="hidden sm:block text-left">
+                  <span className="block text-sm font-semibold text-stone-700 leading-tight">{user?.name}</span>
+                  <span className="text-[10px] text-green-700 bg-green-50 px-1.5 py-0.5 rounded font-medium border border-green-200 uppercase">Production</span>
+                </div>
               </div>
             </div>
           </div>

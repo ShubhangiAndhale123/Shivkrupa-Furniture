@@ -320,7 +320,7 @@ export const mockEmployees = [
   { id: 'EMP-001', name: 'Priya Sharma', email: 'priya.s@shivkrupa.com', role: 'Design Manager', department: 'Sales & Design', mobile: '+91 98765 43220', status: 'Active' },
   { id: 'EMP-002', name: 'Rahul Mehta', email: 'rahul.m@shivkrupa.com', role: 'Sales Executive', department: 'Sales & Design', mobile: '+91 98765 43221', status: 'Active' },
   { id: 'EMP-003', name: 'Suresh Kumar', email: 'suresh.k@shivkrupa.com', role: 'Production Head', department: 'Production', mobile: '+91 98765 43222', status: 'Active' },
-  { id: 'EMP-004', name: 'Amit Desai', email: 'amit.d@shivkrupa.com', role: 'Admin', department: 'Management', mobile: '+91 98765 43223', status: 'Active' },
+  { id: 'EMP-004', name: 'Admin', email: 'admin7338@gmail.com', role: 'Admin', department: 'Management', mobile: '+91 98765 43223', status: 'Active' },
   { id: 'EMP-005', name: 'Neha Gupta', email: 'neha.g@shivkrupa.com', role: 'Designer', department: 'Sales & Design', mobile: '+91 98765 43224', status: 'Active' },
 ]
 

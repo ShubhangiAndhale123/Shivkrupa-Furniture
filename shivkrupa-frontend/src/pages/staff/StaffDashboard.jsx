@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import { ClipboardList, Palette, Calculator, FileText, Package, CheckCircle } from 'lucide-react'
 import Card from '../../components/common/Card'
 import { mockRequirements, mockOrders } from '../../data/mockData'
@@ -16,11 +17,15 @@ const stats = [
 ]
 
 export default function StaffDashboard() {
+  const { user } = useAuth()
+
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="page-title">Staff Dashboard</h1>
-        <p className="text-stone-500 mt-1">Overview of your tasks and activities</p>
+        <h1 className="page-title">Staff Dashboard — {user?.name || 'Staff Member'}</h1>
+        <p className="text-stone-500 mt-1">
+          {user?.department ? `${user.department} Department • ` : ''}Overview of design requirements, estimations, and customer orders
+        </p>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-5">
         {stats.map((stat, idx) => (
